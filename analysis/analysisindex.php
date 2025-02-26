@@ -8,6 +8,7 @@ include('../includes/check_admin.php');
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Incident Analysis</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -108,31 +109,57 @@ include('../includes/check_admin.php');
                         }
                     });
 
-                    // ===== NEW PIE CHART =====
+                    // ===== ENHANCED PIE CHART =====
                     let causes = [];
                     let counts = [];
-                    let colors = [];
+                    let totalIncidents = 0;
 
-                    data.causes.forEach(row => {
+                    // Define a consistent color palette
+                    let colors = [
+                        "#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0",
+                        "#9966FF", "#FF9F40", "#C9CBCF", "#2A9D8F"
+                    ];
+
+                    data.causes.forEach((row, index) => {
                         causes.push(row.cause);
                         counts.push(row.count);
-                        colors.push(getRandomColor());
+                        totalIncidents += row.count;
                     });
 
                     new Chart(document.getElementById('causeChart'), {
-                        type: 'pie',
+                        type: 'doughnut',
                         data: {
                             labels: causes,
                             datasets: [{
                                 data: counts,
-                                backgroundColor: colors,
+                                backgroundColor: colors.slice(0, causes.length),
                                 hoverOffset: 10
                             }]
                         },
                         options: {
                             responsive: true,
                             plugins: {
-                                legend: { display: true, position: 'right' }
+                                legend: { display: true, position: 'right' },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(tooltipItem) {
+                                            let value = tooltipItem.raw;
+                                            let percentage = ((value / totalIncidents) * 100).toFixed(1);
+                                            return ` ${tooltipItem.label}: ${value} (${percentage}%)`;
+                                        }
+                                    }
+                                },
+                                datalabels: {
+                                    color: '#fff',
+                                    formatter: (value, context) => {
+                                        let percentage = ((value / totalIncidents) * 100).toFixed(1);
+                                        return `${percentage}%`;
+                                    }
+                                }
+                            },
+                            animation: {
+                                animateRotate: true,
+                                animateScale: true
                             }
                         }
                     });
