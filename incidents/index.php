@@ -2,7 +2,7 @@
 ob_start(); // Prevent output before headers
 
 require '../includes/config.php';
-include '../includes/header.php';
+include('../includes/check_admin.php');
 
 // Handle Create & Update
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
@@ -132,59 +132,54 @@ $result = $conn->query($sql);
     <a href="create.php" class="btn btn-success mb-3">Add New Incident</a>
     <div class="table-responsive">
         <table class="table table-striped table-bordered">
-            <thead class="table-dark">
-                <tr>
-                    <th>ID</th>
-                    <th>Type</th>
-                    <th>Severity</th>
-                    <th>Location</th>
-                    <th>Reported By</th>
-                    <th>Time</th>
-                    <th>Status</th>
-                    <th>Actions Taken</th> <!-- New column for Actions Taken -->
-                    <th>Cause</th>
-                    <th>Attachments</th>
-                    
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php while ($row = $result->fetch_assoc()): ?>
-                <tr>
-                    <td><?php echo htmlspecialchars($row['incident_id']); ?></td>
-                    <td><?php echo htmlspecialchars($row['incident_type']); ?></td>
-                    <td><?php echo htmlspecialchars($row['severity'] ?? 'Not Specified'); ?></td>
-                    <td><?php echo htmlspecialchars($row['location']); ?></td>
-                    <td><?php echo htmlspecialchars($row['reporter_name']); ?></td>
-                    <td><?php echo htmlspecialchars($row['reported_time']); ?></td>
-                    <td><?php echo htmlspecialchars($row['status_name']); ?></td>
-                    <td><?php echo htmlspecialchars($row['actions_taken'] ?? 'No actions recorded.'); ?></td> <!-- Display Actions Taken -->
-                    <td><?php echo htmlspecialchars($row['cause'] ?? 'No cause recorded.'); ?></td>
-                    <td>
-                        <?php 
-                        if (!empty($row['attachments'])) {
-                            $files = explode(',', $row['attachments']);
-                            foreach ($files as $file) {
-                                $file_ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
-                                if (in_array($file_ext, ['jpg', 'jpeg', 'png', 'gif', 'webp'])) {
-                                    echo '<img src="' . htmlspecialchars(trim($file)) . '" alt="Attachment" style="max-width: 100px; max-height: 100px; margin-right: 5px;">';
-                                } else {
-                                    echo '<a href="' . htmlspecialchars(trim($file)) . '" target="_blank">View File</a><br>';
-                                }
-                            }
-                        } else {
-                            echo 'No Attachments';
-                        }
-                        ?>
-                    </td>
-                    <td>
-                        <a href="edit.php?id=<?php echo $row['incident_id']; ?>" class="btn btn-warning btn-sm">Edit</a>
-                        <a href="?delete=<?php echo $row['incident_id']; ?>" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure?');">Delete</a>
-                    </td>
-                </tr>
-                <?php endwhile; ?>
-            </tbody>
-        </table>
+        <thead class="table-dark">
+    <tr>
+        <th>ID</th>
+        <th>Type</th>
+        <th>Severity</th>
+        <th>Location</th>
+        <th>Reported By</th>
+        <th>Time</th>
+        <th>Cause</th>
+        <th>Attachments</th>
+        <th>Actions</th>
+    </tr>
+</thead>
+<tbody>
+    <?php while ($row = $result->fetch_assoc()): ?>
+    <tr>
+        <td><?php echo htmlspecialchars($row['incident_id']); ?></td>
+        <td><?php echo htmlspecialchars($row['incident_type']); ?></td>
+        <td><?php echo htmlspecialchars($row['severity'] ?? 'Not Specified'); ?></td>
+        <td><?php echo htmlspecialchars($row['location']); ?></td>
+        <td><?php echo htmlspecialchars($row['reporter_name']); ?></td>
+        <td><?php echo htmlspecialchars($row['reported_time']); ?></td>
+        <td><?php echo htmlspecialchars($row['cause'] ?? 'No cause recorded.'); ?></td>
+        <td>
+            <?php 
+            if (!empty($row['attachments'])) {
+                $files = explode(',', $row['attachments']);
+                foreach ($files as $file) {
+                    $file_ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+                    if (in_array($file_ext, ['jpg', 'jpeg', 'png', 'gif', 'webp'])) {
+                        echo '<img src="' . htmlspecialchars(trim($file)) . '" alt="Attachment" style="max-width: 100px; max-height: 100px; margin-right: 5px;">';
+                    } else {
+                        echo '<a href="' . htmlspecialchars(trim($file)) . '" target="_blank">View File</a><br>';
+                    }
+                }
+            } else {
+                echo 'No Attachments';
+            }
+            ?>
+        </td>
+        <td>
+            <a href="edit.php?id=<?php echo $row['incident_id']; ?>" class="btn btn-warning btn-sm">Edit</a>
+            <a href="?delete=<?php echo $row['incident_id']; ?>" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure?');">Delete</a>
+        </td>
+    </tr>
+    <?php endwhile; ?>
+</tbody>
+
     </div>
 </body>
 </html>

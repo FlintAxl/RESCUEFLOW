@@ -1,6 +1,6 @@
 <?php
 session_start();
-include('../includes/header.php');
+include('../includes/check_admin.php');
 include('../includes/config.php');
 // Fetch shifts with member details
 $query = "SELECT s.shift_id, m.first_name, m.last_name, s.start_time, s.end_time, u.username AS assigned_by 

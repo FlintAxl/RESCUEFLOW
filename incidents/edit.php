@@ -37,6 +37,14 @@ $severity_result = $conn->query($severity_sql);
 // Fetch statuses for dropdown
 $status_sql = "SELECT status_id, status_name FROM status ORDER BY status_id ASC";
 $status_result = $conn->query($status_sql);
+
+// Fetch ENUM values for cause
+$cause_enum_query = "SHOW COLUMNS FROM incidents LIKE 'cause'";
+$cause_enum_result = $conn->query($cause_enum_query);
+$cause_enum_row = $cause_enum_result->fetch_assoc();
+preg_match_all("/'([^']*)'/", $cause_enum_row['Type'], $matches);
+$causes = $matches[1]; // Extract ENUM values
+
 ?>
 
 <!DOCTYPE html>
@@ -107,9 +115,17 @@ $status_result = $conn->query($status_sql);
         </div>
         
         <div class="mb-3">
-            <label for="cause" class="form-label">Cause</label>
-            <textarea class="form-control" id="cause" name="cause" rows="4" required><?php echo htmlspecialchars($incident['cause']); ?></textarea>
-        </div>
+    <label for="cause" class="form-label">Cause</label>
+    <select class="form-control" id="cause" name="cause" required>
+        <option value="">Select Cause</option>
+        <?php foreach ($causes as $cause_option): ?>
+            <option value="<?php echo htmlspecialchars($cause_option); ?>" <?php echo ($incident['cause'] == $cause_option) ? 'selected' : ''; ?>>
+                <?php echo htmlspecialchars($cause_option); ?>
+            </option>
+        <?php endforeach; ?>
+    </select>
+</div>
+
         
         <button type="submit" class="btn btn-primary">Update</button>
     </form>

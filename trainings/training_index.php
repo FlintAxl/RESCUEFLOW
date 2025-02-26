@@ -1,6 +1,6 @@
 <?php
 session_start();
-include('../includes/header.php');
+include('../includes/check_admin.php');
 include('../includes/config.php');
 // Fetch members data
 

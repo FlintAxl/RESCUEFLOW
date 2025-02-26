@@ -1,6 +1,6 @@
 <?php
 session_start();
-include('../includes/header.php');
+include('../includes/check_admin.php');
 include('../includes/config.php');
 // Fetch members data
 $sql = "SELECT members.member_id, members.first_name, members.last_name, members.email, members.phone, members.image, 

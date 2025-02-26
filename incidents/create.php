@@ -47,8 +47,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $severity_id = $_POST['severity_id'] ?? null;
     $location = trim($_POST['location']);
     $reported_by = $_POST['reported_by'] ?? null;
-    $status_id = $_POST['status_id'] ?? 1; // Default to 'Pending'
-    $actions_taken = trim($_POST['actions_taken']);
+    $status_id = !empty($_POST['status_id']) ? $_POST['status_id'] : null;
+    $actions_taken = isset($_POST['actions_taken']) ? trim($_POST['actions_taken']) : null;
     $cause = trim($_POST['cause']);
     $attachments = [];
 
@@ -164,7 +164,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         <div class="mb-3">
             <label for="status_id" class="form-label">Status</label>
-            <select class="form-control" id="status_id" name="status_id" required>
+            <select class="form-control" id="status_id" name="status_id">
                 <option value="">Select Status</option>
                 <?php while ($status = $status_result->fetch_assoc()): ?>
                     <option value="<?php echo $status['status_id']; ?>" <?php echo isset($incident['status_id']) && $incident['status_id'] == $status['status_id'] ? 'selected' : ''; ?>>
@@ -176,7 +176,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         <div class="mb-3">
             <label for="actions_taken" class="form-label">Actions Taken</label>
-            <textarea class="form-control" id="actions_taken" name="actions_taken" rows="4" required><?php echo htmlspecialchars($incident['actions_taken'] ?? ''); ?></textarea>
+            <textarea class="form-control" id="actions_taken" name="actions_taken" rows="4"><?php echo htmlspecialchars($incident['actions_taken'] ?? ''); ?></textarea>
         </div>
 
         <div class="mb-3">
@@ -192,9 +192,24 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <?php endif; ?>
         </div>
         <div class="mb-3">
-            <label for="cause" class="form-label">Cause</label>
-            <textarea class="form-control" id="cause" name="cause" rows="4" required><?php echo htmlspecialchars($incident['cause'] ?? ''); ?></textarea>
-        </div>
+    <label for="cause" class="form-label">Cause</label>
+    <select class="form-control" id="cause" name="cause" required>
+        <option value="">Select a Cause</option>
+        <?php
+        $causes = [
+            'Electrical Faults', 'Unattended Cooking', 'Candles & Open Flames',
+            'Smoking Indoors', 'Gas Leaks', 'Flammable Liquids',
+            'Children Playing with Fire', 'Heating Equipment',
+            'Faulty Appliances', 'Arson'
+        ];
+        foreach ($causes as $cause_option): ?>
+            <option value="<?php echo $cause_option; ?>" <?php echo (isset($incident['cause']) && $incident['cause'] == $cause_option) ? 'selected' : ''; ?>>
+                <?php echo $cause_option; ?>
+            </option>
+        <?php endforeach; ?>
+    </select>
+</div>
+
 
         <button type="submit" class="btn btn-primary">Submit</button>
     </form>

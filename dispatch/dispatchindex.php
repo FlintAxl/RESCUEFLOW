@@ -1,7 +1,7 @@
 <?php
 session_start();
 include('../includes/config.php');
-include('../includes/header.php');
+include('../includes/check_admin.php');
 
 // Fetch status options
 $statusQuery = "SELECT * FROM status";

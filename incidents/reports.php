@@ -1,16 +1,15 @@
 <?php
 require '../includes/config.php';
-include '../includes/header.php';
+include('../includes/check_admin.php');
 
-// Fetch incidents with severity name, attachments, member details, status name, actions_taken, and cause
+// Fetch incidents without status and actions_taken
 $sql = "SELECT i.incident_id, i.incident_type, i.location, 
                CONCAT(m.first_name, ' ', m.last_name) AS reported_by, 
-               i.reported_time, st.status_name, i.attachments, 
-               s.level AS severity, i.actions_taken, i.cause
+               i.reported_time, i.attachments, 
+               s.level AS severity, i.cause
         FROM incidents i
         LEFT JOIN members m ON i.reported_by = m.member_id
         LEFT JOIN severity s ON i.severity_id = s.id
-        LEFT JOIN status st ON i.status_id = st.status_id
         ORDER BY i.reported_time DESC";
 
 $result = $conn->query($sql);
@@ -37,9 +36,7 @@ $result = $conn->query($sql);
                     <th>Location</th>
                     <th>Reported By</th>
                     <th>Reported Time</th>
-                    <th>Status</th>
                     <th>Cause</th> <!-- New Column -->
-                    <th>Actions Taken</th>
                     <th>Attachments</th>
                 </tr>
             </thead>
@@ -52,9 +49,7 @@ $result = $conn->query($sql);
                     <td><?php echo htmlspecialchars($row['location']); ?></td>
                     <td><?php echo htmlspecialchars($row['reported_by'] ?? 'Unknown'); ?></td>
                     <td><?php echo htmlspecialchars($row['reported_time']); ?></td>
-                    <td><?php echo htmlspecialchars($row['status_name']); ?></td>
                     <td><?php echo htmlspecialchars($row['cause'] ?? 'Not specified'); ?></td> <!-- Display cause -->
-                    <td><?php echo htmlspecialchars($row['actions_taken'] ?? 'No actions recorded'); ?></td>
                     <td>
                         <?php 
                         if (!empty($row['attachments'])) {
