@@ -92,7 +92,6 @@
             <li><a href="">ATTENDANCE</a></li>
             <li><a href="/RESCUEFLOW/shift/shift_index.php">SHIFTS</a></li>
             <li><a href="/RESCUEFLOW/trainings/training_index.php">TRAINING SCHEDULE</a></li>
-            <li><a href="/RESCUEFLOW/dispatch/dispatchindex.php">Dipatch</a></li>
             <li><a href="/RESCUEFLOW/analysis/analysisindex.php">ANALYSIS</a></li>
         </ul>
     </nav>

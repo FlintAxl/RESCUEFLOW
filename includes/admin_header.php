@@ -109,6 +109,7 @@
                 <a href="/RESCUEFLOW/asset/index.php">add asset</a>
                 <a href="/RESCUEFLOW/shift/index.php">add shifts</a>
                 <a href="/RESCUEFLOW/incidents/index.php">add incidents</a>
+                <a href="/RESCUEFLOW/dispatch/dispatchindex.php">Dipatch</a>
             </div>
         </div>
     </div>

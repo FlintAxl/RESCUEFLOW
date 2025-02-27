@@ -3,31 +3,22 @@ ob_start(); // Prevent output before headers
 
 require '../includes/config.php';
 include('../includes/check_admin.php');
+require_once('../vendor/tecnickcom/tcpdf/tcpdf.php');
 
 // Handle Create & Update
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $incident_id = $_POST['incident_id'] ?? null;
-    $incident_type = trim($_POST['incident_type']);
+    $incident_type = isset($_POST['incident_type']) ? trim($_POST['incident_type']) : '';
     $severity_id = $_POST['severity_id'] ?? null;
-    $location = trim($_POST['location']);
-    $reported_by = !empty($_POST['reported_by']) ? intval($_POST['reported_by']) : null;
-    $status = $_POST['status'] ?? 'Pending';
-    $actions_taken = trim($_POST['actions_taken']); // New field for actions taken
+    $location = isset($_POST['location']) ? trim($_POST['location']) : '';
+    
+    // Ensure 'reported_by' is provided, or set a default value (e.g., "Anonymous" or empty string)
+    $reported_by = !empty($_POST['reported_by']) ? trim($_POST['reported_by']) : 'Anonymous'; // Default to 'Anonymous'
+    
+    $status_id = isset($_POST['status']) ? $_POST['status'] : 'Pending'; // Assuming 'status' is an ID
+    $actions_taken = isset($_POST['actions_taken']) ? trim($_POST['actions_taken']) : '';
     $attachments = [];
-    $cause = trim($_POST['cause']); // New field for cause
-
-    // Verify reported_by exists in members table
-    if (!is_null($reported_by)) {
-        $check_member_sql = "SELECT member_id FROM members WHERE member_id = ?";
-        $check_stmt = $conn->prepare($check_member_sql);
-        $check_stmt->bind_param("i", $reported_by);
-        $check_stmt->execute();
-        $check_stmt->store_result();
-        if ($check_stmt->num_rows == 0) {
-            die("Error: The reported_by ID does not exist in the members table.");
-        }
-        $check_stmt->close();
-    }
+    $cause = isset($_POST['cause']) ? trim($_POST['cause']) : ''; // Ensure cause is safely assigned
 
     // Handle file uploads
     $upload_dir = '../uploads/';
@@ -69,16 +60,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     if ($incident_id) {
         // Update Incident
-        $sql = "UPDATE incidents SET incident_type=?, severity_id=?, location=?, reported_by=?, status=?, actions_taken=?, cause=?, attachments=? WHERE incident_id=?";
+        $sql = "UPDATE incidents SET incident_type=?, severity_id=?, location=?, reported_by=?, status_id=?, actions_taken=?, cause=?, attachments=? WHERE incident_id=?";
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("sississsi", $incident_type, $severity_id, $location, $reported_by, $status, $actions_taken, $cause, $attachments_string, $incident_id);
+        $stmt->bind_param("sississsi", $incident_type, $severity_id, $location, $reported_by, $status_id, $actions_taken, $cause, $attachments_string, $incident_id);
     } else {
         // Insert New Incident
-        $sql = "INSERT INTO incidents (incident_type, severity_id, location, reported_by, status, actions_taken, cause, attachments) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        $sql = "INSERT INTO incidents (incident_type, severity_id, location, reported_by, status_id, actions_taken, cause, attachments) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("sississs", $incident_type, $severity_id, $location, $reported_by, $status, $actions_taken, $cause, $attachments_string);
+        $stmt->bind_param("sississs", $incident_type, $severity_id, $location, $reported_by, $status_id, $actions_taken, $cause, $attachments_string);
     }
-
 
     if ($stmt->execute()) {
         $stmt->close();
@@ -104,18 +94,20 @@ if (isset($_GET['delete'])) {
     }
 }
 
-// Fetch incidents with severity name, member name, status name, and actions taken
+// Fetch incidents with severity name, reported_by as plain text, and other details
 $sql = "SELECT i.*, 
-               COALESCE(CONCAT(m.first_name, ' ', m.last_name), 'Unknown') AS reporter_name, 
+               i.reported_by AS reporter_name, 
                s.level AS severity,
-               st.status_name 
+               st.status_name,
+               i.address
         FROM incidents i
-        LEFT JOIN members m ON i.reported_by = m.member_id
         LEFT JOIN severity s ON i.severity_id = s.id
         LEFT JOIN status st ON i.status_id = st.status_id
         ORDER BY i.reported_time DESC";
 
 $result = $conn->query($sql);
+
+
 ?>
 
 <!DOCTYPE html>
@@ -130,56 +122,60 @@ $result = $conn->query($sql);
 <body class="container mt-4">
     <h1 class="mb-4">Incident Reports</h1>
     <a href="create.php" class="btn btn-success mb-3">Add New Incident</a>
+    <a href="generate_pdf.php" class="btn btn-primary mb-3">Download PDF</a>
+
     <div class="table-responsive">
         <table class="table table-striped table-bordered">
-        <thead class="table-dark">
-    <tr>
-        <th>ID</th>
-        <th>Type</th>
-        <th>Severity</th>
-        <th>Location</th>
-        <th>Reported By</th>
-        <th>Time</th>
-        <th>Cause</th>
-        <th>Attachments</th>
-        <th>Actions</th>
-    </tr>
-</thead>
-<tbody>
-    <?php while ($row = $result->fetch_assoc()): ?>
-    <tr>
-        <td><?php echo htmlspecialchars($row['incident_id']); ?></td>
-        <td><?php echo htmlspecialchars($row['incident_type']); ?></td>
-        <td><?php echo htmlspecialchars($row['severity'] ?? 'Not Specified'); ?></td>
-        <td><?php echo htmlspecialchars($row['location']); ?></td>
-        <td><?php echo htmlspecialchars($row['reporter_name']); ?></td>
-        <td><?php echo htmlspecialchars($row['reported_time']); ?></td>
-        <td><?php echo htmlspecialchars($row['cause'] ?? 'No cause recorded.'); ?></td>
-        <td>
-            <?php 
-            if (!empty($row['attachments'])) {
-                $files = explode(',', $row['attachments']);
-                foreach ($files as $file) {
-                    $file_ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
-                    if (in_array($file_ext, ['jpg', 'jpeg', 'png', 'gif', 'webp'])) {
-                        echo '<img src="' . htmlspecialchars(trim($file)) . '" alt="Attachment" style="max-width: 100px; max-height: 100px; margin-right: 5px;">';
-                    } else {
-                        echo '<a href="' . htmlspecialchars(trim($file)) . '" target="_blank">View File</a><br>';
-                    }
-                }
-            } else {
-                echo 'No Attachments';
-            }
-            ?>
-        </td>
-        <td>
-            <a href="edit.php?id=<?php echo $row['incident_id']; ?>" class="btn btn-warning btn-sm">Edit</a>
-            <a href="?delete=<?php echo $row['incident_id']; ?>" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure?');">Delete</a>
-        </td>
-    </tr>
-    <?php endwhile; ?>
-</tbody>
-
+            <thead class="table-dark">
+                <tr>
+                    <th>ID</th>
+                    <th>Type</th>
+                    <th>Severity</th>
+                    <th>Location</th>
+                    <th>Address</th>
+                    <th>Reported By</th>
+                    <th>Time</th>
+                    <th>Cause</th>
+                    <th>Attachments</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php while ($row = $result->fetch_assoc()): ?>
+                    <tr>
+                        <td><?php echo htmlspecialchars($row['incident_id']); ?></td>
+                        <td><?php echo htmlspecialchars($row['incident_type']); ?></td>
+                        <td><?php echo htmlspecialchars($row['severity'] ?? 'Not Specified'); ?></td>
+                        <td><?php echo htmlspecialchars($row['location']); ?></td>
+                        <td><?php echo htmlspecialchars($row['address']); ?></td>
+                        <td><?php echo htmlspecialchars($row['reporter_name']); ?></td>
+                        <td><?php echo htmlspecialchars($row['reported_time']); ?></td>
+                        <td><?php echo htmlspecialchars($row['cause'] ?? 'No cause recorded.'); ?></td>
+                        <td>
+                            <?php 
+                            if (!empty($row['attachments'])) {
+                                $files = explode(',', $row['attachments']);
+                                foreach ($files as $file) {
+                                    $file_ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+                                    if (in_array($file_ext, ['jpg', 'jpeg', 'png', 'gif', 'webp'])) {
+                                        echo '<img src="' . htmlspecialchars(trim($file)) . '" alt="Attachment" style="max-width: 100px; max-height: 100px; margin-right: 5px;">';
+                                    } else {
+                                        echo '<a href="' . htmlspecialchars(trim($file)) . '" target="_blank">View File</a><br>';
+                                    }
+                                }
+                            } else {
+                                echo 'No Attachments';
+                            }
+                            ?>
+                        </td>
+                        <td>
+                            <a href="edit.php?id=<?php echo $row['incident_id']; ?>" class="btn btn-warning btn-sm">Edit</a>
+                            <a href="?delete=<?php echo $row['incident_id']; ?>" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure?');">Delete</a>
+                        </td>
+                    </tr>
+                <?php endwhile; ?>
+            </tbody>
+        </table>
     </div>
 </body>
 </html>
