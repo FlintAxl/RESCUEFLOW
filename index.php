@@ -23,7 +23,7 @@ $conn->close();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!--<meta http-equiv="refresh" content="5">--> <!-- Refresh page every 5 seconds -->
+    <meta http-equiv="refresh" content="5"> <!-- Refresh page every 5 seconds -->
     <title>Dispatch Locations</title>
 </head>
 <body>

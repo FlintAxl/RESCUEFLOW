@@ -1,4 +1,9 @@
 <?php
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+
+require '../vendor/autoload.php'; // Adjust this path if necessary
+
 session_start();
 include('../includes/config.php');
 include('../includes/check_admin.php');
@@ -19,6 +24,7 @@ while ($row = mysqli_fetch_assoc($emergencyHistoryResult)) {
     $emergencyHistory[] = $row;
 }
 
+// Handle Dispatch Submission
 if (isset($_POST["submit_location"])) {
     $location = mysqli_real_escape_string($conn, $_POST["location"]);
     $status_id = 2; // Default to "In progress"
@@ -28,6 +34,43 @@ if (isset($_POST["submit_location"])) {
 
     if (mysqli_query($conn, $sql)) {
         echo "<p style='color: green;'>Location saved successfully!</p>";
+
+        // Fetch on-duty members
+        $onDutyQuery = "SELECT m.email FROM shifts s 
+                        JOIN members m ON s.member_id = m.member_id 
+                        WHERE NOW() BETWEEN s.start_time AND s.end_time";
+        $onDutyResult = mysqli_query($conn, $onDutyQuery);
+
+        // Email details
+        $subject = "🚨 Emergency Alert: Dispatch to $location";
+        $message = "An emergency is ongoing at $location. Firetruck dispatched.\n\nPlease take necessary actions.";
+
+        // Initialize PHPMailer
+        $mail = new PHPMailer(true);
+        try {
+            // SMTP Configuration
+            $mail->isSMTP();
+            $mail->Host = 'smtp.gmail.com'; 
+            $mail->SMTPAuth = true;
+            $mail->Username = 'flintaxl.celetaria@gmail.com';
+            $mail->Password = 'whif dedq ytly ryfo';  // App Password, NOT your actual password
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+            $mail->Port = 587;
+            $mail->setFrom('flintaxl.celetaria@gmail.com', 'RescueFlow Dispatch');
+            $mail->isHTML(false);  // Plain text email
+
+            // Send email to each on-duty member
+            while ($row = mysqli_fetch_assoc($onDutyResult)) {
+                $mail->addAddress($row['email']);
+                $mail->Subject = $subject;
+                $mail->Body = $message;
+                $mail->send();
+                $mail->clearAddresses();  // Clear addresses for the next email
+            }
+            echo "<p style='color: green;'>Emails sent successfully!</p>";
+        } catch (Exception $e) {
+            echo "<p style='color: red;'>Mailer Error: " . $mail->ErrorInfo . "</p>";
+        }
     } else {
         echo "<p style='color: red;'>Error: " . mysqli_error($conn) . "</p>";
     }
@@ -47,14 +90,14 @@ if (isset($_POST["update_status"])) {
     }
 }
 
-// Handle emergency data entry (What, Where, Why, Caller info)
+// Handle emergency data entry
 if (isset($_POST['submit_emergency_info'])) {
     $what = mysqli_real_escape_string($conn, $_POST['what']);
     $where = mysqli_real_escape_string($conn, $_POST['where']);
     $why = mysqli_real_escape_string($conn, $_POST['why']);
     $caller_name = mysqli_real_escape_string($conn, $_POST['caller_name']);
     $caller_phone = mysqli_real_escape_string($conn, $_POST['caller_phone']);
-    $dispatch_id = $_POST['dispatch_id']; // Assuming dispatch_id is passed
+    $dispatch_id = $_POST['dispatch_id']; 
 
     $sql = "INSERT INTO emergency_details (dispatch_id, what, `where`, `why`, caller_name, caller_phone) 
     VALUES ('$dispatch_id', '$what', '$where', '$why', '$caller_name', '$caller_phone')";
@@ -66,6 +109,8 @@ if (isset($_POST['submit_emergency_info'])) {
     }
 }
 ?>
+
+
 
 <!DOCTYPE html>
 <html lang="en">

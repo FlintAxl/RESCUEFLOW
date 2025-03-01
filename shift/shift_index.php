@@ -2,8 +2,15 @@
 session_start();
 include('../includes/check_admin.php');
 include('../includes/config.php');
-// Fetch shifts with member details
-$query = "SELECT s.shift_id, m.first_name, m.last_name, s.start_time, s.end_time, u.username AS assigned_by 
+
+
+// Fetch shifts with member details and calculate status
+$query = "SELECT s.shift_id, m.first_name, m.last_name, s.start_time, s.end_time, 
+                 u.username AS assigned_by, 
+                 CASE 
+                    WHEN NOW() BETWEEN s.start_time AND s.end_time THEN 'On Duty'
+                    ELSE 'Off Duty'
+                 END AS status
           FROM shifts s
           JOIN members m ON s.member_id = m.member_id
           LEFT JOIN users u ON s.assigned_by = u.user_id
@@ -25,7 +32,7 @@ $result = mysqli_query($conn, $query);
     <div class="container mt-5">
         <h2 class="mb-4 text-center">Shift Management</h2>
 
-    
+       
 
         <div class="table-responsive">
             <table class="table table-bordered table-striped">
@@ -35,6 +42,8 @@ $result = mysqli_query($conn, $query);
                         <th>Start Time</th>
                         <th>End Time</th>
                         <th>Assigned By</th>
+                        <th>Status</th>
+                        
                     </tr>
                 </thead>
                 <tbody>
@@ -44,7 +53,12 @@ $result = mysqli_query($conn, $query);
                             <td><?php echo $row['start_time']; ?></td>
                             <td><?php echo $row['end_time']; ?></td>
                             <td><?php echo $row['assigned_by'] ?? 'N/A'; ?></td>
-                          
+                            <td>
+                                <span class="badge <?php echo $row['status'] === 'On Duty' ? 'bg-success' : 'bg-secondary'; ?>">
+                                    <?php echo $row['status']; ?>
+                                </span>
+                            </td>
+                            
                         </tr>
                     <?php endwhile; ?>
                 </tbody>

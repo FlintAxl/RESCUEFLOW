@@ -1,11 +1,16 @@
 <?php
 session_start();
 include('../includes/check_admin.php');
-
 include('../includes/config.php');
 include('../includes/restrict_admin.php');
-// Fetch shifts with member details
-$query = "SELECT s.shift_id, m.first_name, m.last_name, s.start_time, s.end_time, u.username AS assigned_by 
+
+// Fetch shifts with member details and calculate status
+$query = "SELECT s.shift_id, m.first_name, m.last_name, s.start_time, s.end_time, 
+                 u.username AS assigned_by, 
+                 CASE 
+                    WHEN NOW() BETWEEN s.start_time AND s.end_time THEN 'On Duty'
+                    ELSE 'Off Duty'
+                 END AS status
           FROM shifts s
           JOIN members m ON s.member_id = m.member_id
           LEFT JOIN users u ON s.assigned_by = u.user_id
@@ -39,6 +44,7 @@ $result = mysqli_query($conn, $query);
                         <th>Start Time</th>
                         <th>End Time</th>
                         <th>Assigned By</th>
+                        <th>Status</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -49,6 +55,11 @@ $result = mysqli_query($conn, $query);
                             <td><?php echo $row['start_time']; ?></td>
                             <td><?php echo $row['end_time']; ?></td>
                             <td><?php echo $row['assigned_by'] ?? 'N/A'; ?></td>
+                            <td>
+                                <span class="badge <?php echo $row['status'] === 'On Duty' ? 'bg-success' : 'bg-secondary'; ?>">
+                                    <?php echo $row['status']; ?>
+                                </span>
+                            </td>
                             <td>
                                 <a href="edit_shift.php?id=<?php echo $row['shift_id']; ?>" class="btn btn-warning btn-sm">Edit</a>
                                 <a href="delete_shift.php?id=<?php echo $row['shift_id']; ?>" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure?');">Delete</a>

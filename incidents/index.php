@@ -10,15 +10,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $incident_id = $_POST['incident_id'] ?? null;
     $incident_type = isset($_POST['incident_type']) ? trim($_POST['incident_type']) : '';
     $severity_id = $_POST['severity_id'] ?? null;
-    $location = isset($_POST['location']) ? trim($_POST['location']) : '';
-    
-    // Ensure 'reported_by' is provided, or set a default value (e.g., "Anonymous" or empty string)
-    $reported_by = !empty($_POST['reported_by']) ? trim($_POST['reported_by']) : 'Anonymous'; // Default to 'Anonymous'
-    
-    $status_id = isset($_POST['status']) ? $_POST['status'] : 'Pending'; // Assuming 'status' is an ID
+    $barangay_id = $_POST['barangay_id'] ?? null; // Use barangay_id instead of location
+
+    // Ensure 'reported_by' is provided, or set a default value (e.g., "Anonymous")
+    $reported_by = !empty($_POST['reported_by']) ? trim($_POST['reported_by']) : 'Anonymous'; 
+    $status_id = isset($_POST['status']) ? $_POST['status'] : 'Pending'; 
     $actions_taken = isset($_POST['actions_taken']) ? trim($_POST['actions_taken']) : '';
     $attachments = [];
-    $cause = isset($_POST['cause']) ? trim($_POST['cause']) : ''; // Ensure cause is safely assigned
+    $cause = isset($_POST['cause']) ? trim($_POST['cause']) : ''; 
 
     // Handle file uploads
     $upload_dir = '../uploads/';
@@ -34,8 +33,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 if (move_uploaded_file($tmp_name, $file_path)) {
                     $attachments[] = $file_path;
                 }
-            } else {
-                die("Error uploading file: " . $_FILES['attachments']['error'][$key]);
             }
         }
     }
@@ -60,22 +57,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     if ($incident_id) {
         // Update Incident
-        $sql = "UPDATE incidents SET incident_type=?, severity_id=?, location=?, reported_by=?, status_id=?, actions_taken=?, cause=?, attachments=? WHERE incident_id=?";
+        $sql = "UPDATE incidents SET incident_type=?, severity_id=?, barangay_id=?, reported_by=?, status_id=?, actions_taken=?, cause=?, attachments=? WHERE incident_id=?";
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("sississsi", $incident_type, $severity_id, $location, $reported_by, $status_id, $actions_taken, $cause, $attachments_string, $incident_id);
+        $stmt->bind_param("sississsi", $incident_type, $severity_id, $barangay_id, $reported_by, $status_id, $actions_taken, $cause, $attachments_string, $incident_id);
     } else {
         // Insert New Incident
-        $sql = "INSERT INTO incidents (incident_type, severity_id, location, reported_by, status_id, actions_taken, cause, attachments) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        $sql = "INSERT INTO incidents (incident_type, severity_id, barangay_id, reported_by, status_id, actions_taken, cause, attachments) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("sississs", $incident_type, $severity_id, $location, $reported_by, $status_id, $actions_taken, $cause, $attachments_string);
+        $stmt->bind_param("sississs", $incident_type, $severity_id, $barangay_id, $reported_by, $status_id, $actions_taken, $cause, $attachments_string);
     }
 
     if ($stmt->execute()) {
         $stmt->close();
         header("Location: index.php");
         exit();
-    } else {
-        die("Database error: " . $stmt->error);
     }
 }
 
@@ -89,25 +84,23 @@ if (isset($_GET['delete'])) {
         $stmt->close();
         header("Location: index.php");
         exit();
-    } else {
-        die("Delete error: " . $stmt->error);
     }
 }
 
-// Fetch incidents with severity name, reported_by as plain text, and other details
+// Fetch incidents with barangay name instead of location
 $sql = "SELECT i.*, 
                i.reported_by AS reporter_name, 
                s.level AS severity,
                st.status_name,
-               i.address
+               i.address,
+               b.barangay_name AS barangay
         FROM incidents i
         LEFT JOIN severity s ON i.severity_id = s.id
         LEFT JOIN status st ON i.status_id = st.status_id
+        LEFT JOIN barangays b ON i.barangay_id = b.barangay_id 
         ORDER BY i.reported_time DESC";
 
 $result = $conn->query($sql);
-
-
 ?>
 
 <!DOCTYPE html>
@@ -131,7 +124,7 @@ $result = $conn->query($sql);
                     <th>ID</th>
                     <th>Type</th>
                     <th>Severity</th>
-                    <th>Location</th>
+                    <th>Barangay</th>
                     <th>Address</th>
                     <th>Reported By</th>
                     <th>Time</th>
@@ -146,7 +139,7 @@ $result = $conn->query($sql);
                         <td><?php echo htmlspecialchars($row['incident_id']); ?></td>
                         <td><?php echo htmlspecialchars($row['incident_type']); ?></td>
                         <td><?php echo htmlspecialchars($row['severity'] ?? 'Not Specified'); ?></td>
-                        <td><?php echo htmlspecialchars($row['location']); ?></td>
+                        <td><?php echo htmlspecialchars($row['barangay']); ?></td>
                         <td><?php echo htmlspecialchars($row['address']); ?></td>
                         <td><?php echo htmlspecialchars($row['reporter_name']); ?></td>
                         <td><?php echo htmlspecialchars($row['reported_time']); ?></td>
@@ -182,5 +175,5 @@ $result = $conn->query($sql);
 
 <?php
 $conn->close();
-ob_end_flush(); // End output buffering
+ob_end_flush();
 ?>

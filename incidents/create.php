@@ -3,27 +3,30 @@ ob_start(); // Prevent output before headers
 require '../includes/config.php';
 include '../includes/header.php';
 
-
 // Fetch severity levels
 $severity_sql = "SELECT id, level FROM severity ORDER BY id ASC";
 $severity_result = $conn->query($severity_sql);
-
 if (!$severity_result) {
     die("Database error: " . $conn->error);
 }
 
-// Fetch status options for the dropdown
+// Fetch status options
 $status_sql = "SELECT status_id, status_name FROM status ORDER BY status_id ASC";
 $status_result = $conn->query($status_sql);
-
 if (!$status_result) {
+    die("Database error: " . $conn->error);
+}
+
+// Fetch barangays
+$barangay_sql = "SELECT barangay_id, barangay_name FROM barangays ORDER BY barangay_name ASC";
+$barangay_result = $conn->query($barangay_sql);
+if (!$barangay_result) {
     die("Database error: " . $conn->error);
 }
 
 // Check if editing an incident
 $incident_id = $_GET['id'] ?? null;
 $incident = null;
-
 if ($incident_id) {
     $incident_sql = "SELECT * FROM incidents WHERE incident_id = ?";
     $stmt = $conn->prepare($incident_sql);
@@ -38,11 +41,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $incident_id = $_POST['incident_id'] ?? null;
     $incident_type = trim($_POST['incident_type']);
     $severity_id = $_POST['severity_id'] ?? null;
-    $location = trim($_POST['location']);
-    $address = trim($_POST['address']);  // Add this line to capture the address
-    $reported_by = $_POST['reported_by'] ?? null;
-    $status_id = !empty($_POST['status_id']) ? $_POST['status_id'] : null;
-    $actions_taken = isset($_POST['actions_taken']) ? trim($_POST['actions_taken']) : null;
+    $barangay_id = $_POST['barangay_id'] ?? null;
+    $address = trim($_POST['address']);
+    $reported_by = trim($_POST['reported_by']);
+    $status_id = $_POST['status_id'] ?? null;
+    $actions_taken = trim($_POST['actions_taken'] ?? '');
     $cause = trim($_POST['cause']);
     $attachments = [];
 
@@ -84,17 +87,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     // SQL query to insert or update incident
     if ($incident_id) {
-        // Update Incident
-        $sql = "UPDATE incidents SET incident_type=?, severity_id=?, location=?, reported_by=?, status_id=?, actions_taken=?, cause=?, attachments=?, address=? WHERE incident_id=?";
+        $sql = "UPDATE incidents SET incident_type=?, severity_id=?, barangay_id=?, address=?, reported_by=?, status_id=?, actions_taken=?, cause=?, attachments=? WHERE incident_id=?";
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("sississssi", $incident_type, $severity_id, $location, $reported_by, $status_id, $actions_taken, $cause, $attachments_string, $address, $incident_id);
-        
+        $stmt->bind_param("siississsi", $incident_type, $severity_id, $barangay_id, $address, $reported_by, $status_id, $actions_taken, $cause, $attachments_string, $incident_id);
     } else {
-        // Insert New Incident
-        $sql = "INSERT INTO incidents (incident_type, severity_id, location, reported_by, status_id, actions_taken, cause, attachments, address) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        $sql = "INSERT INTO incidents (incident_type, severity_id, barangay_id, address, reported_by, status_id, actions_taken, cause, attachments) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("sississss", $incident_type, $severity_id, $location, $reported_by, $status_id, $actions_taken, $cause, $attachments_string, $address);
-        
+        $stmt->bind_param("siississs", $incident_type, $severity_id, $barangay_id, $address, $reported_by, $status_id, $actions_taken, $cause, $attachments_string);
     }
 
     if ($stmt->execute()) {
@@ -141,11 +140,21 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             </select>
         </div>
 
+      
+        </select>
         <div class="mb-3">
-            <label for="location" class="form-label">Location</label>
-            <input type="text" class="form-control" id="location" name="location" value="<?php echo htmlspecialchars($incident['location'] ?? ''); ?>" required>
-        </div>
+<label for="barangay_id">Barangay</label>
+<select name="barangay_id" required>
+    <option value="">Select Barangay</option>
+    <?php while ($barangay = $barangay_result->fetch_assoc()): ?>
+        <option value="<?php echo $barangay['barangay_id']; ?>" <?php echo (isset($incident['barangay_id']) && $incident['barangay_id'] == $barangay['barangay_id']) ? 'selected' : ''; ?>>
+    <?php echo htmlspecialchars($barangay['barangay_name']); ?>
+</option>
 
+
+    <?php endwhile; ?>
+</select>
+</div>
         <div class="mb-3">
     <label for="address" class="form-label">Address</label>
     <input type="text" class="form-control" id="address" name="address" value="<?php echo htmlspecialchars($incident['address'] ?? ''); ?>" required>

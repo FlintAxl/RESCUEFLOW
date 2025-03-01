@@ -60,10 +60,10 @@ include('../includes/check_admin.php');
             fetch('getdata.php')
                 .then(response => response.json())
                 .then(data => {
-                    // ===== EXISTING BAR CHART =====
+                    // ===== BAR CHART =====
                     let dates = [];
-                    let locations = {};
-                    let locationColors = {};
+                    let barangays = {};
+                    let barangayColors = {};
 
                     // Assign random colors
                     const getRandomColor = () => '#' + Math.floor(Math.random()*16777215).toString(16);
@@ -72,17 +72,17 @@ include('../includes/check_admin.php');
                         if (!dates.includes(row.incident_date)) {
                             dates.push(row.incident_date);
                         }
-                        if (!locations[row.location]) {
-                            locations[row.location] = {};
-                            locationColors[row.location] = getRandomColor();
+                        if (!barangays[row.barangay]) {
+                            barangays[row.barangay] = {};
+                            barangayColors[row.barangay] = getRandomColor();
                         }
-                        locations[row.location][row.incident_date] = row.count;
+                        barangays[row.barangay][row.incident_date] = row.count;
                     });
 
-                    let datasets = Object.keys(locations).map(location => ({
-                        label: location,
-                        backgroundColor: locationColors[location],
-                        data: dates.map(date => locations[location][date] || 0)
+                    let datasets = Object.keys(barangays).map(barangay => ({
+                        label: barangay,
+                        backgroundColor: barangayColors[barangay],
+                        data: dates.map(date => barangays[barangay][date] || 0)
                     }));
 
                     new Chart(document.getElementById('incidentChart'), {
@@ -109,12 +109,11 @@ include('../includes/check_admin.php');
                         }
                     });
 
-                    // ===== ENHANCED PIE CHART =====
+                    // ===== PIE CHART =====
                     let causes = [];
                     let counts = [];
                     let totalIncidents = 0;
 
-                    // Define a consistent color palette
                     let colors = [
                         "#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0",
                         "#9966FF", "#FF9F40", "#C9CBCF", "#2A9D8F"

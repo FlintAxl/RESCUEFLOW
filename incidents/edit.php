@@ -10,8 +10,8 @@ if (!isset($_GET['id']) || empty($_GET['id'])) {
 }
 $incident_id = intval($_GET['id']);
 
-// Fetch incident details including address
-$sql = "SELECT i.incident_id, i.incident_type, i.location, i.reported_by, i.severity_id, i.cause, i.address, s.level as severity_level
+// Fetch incident details including barangay
+$sql = "SELECT i.incident_id, i.incident_type, i.barangay_id, i.reported_by, i.severity_id, i.cause, i.address, s.level as severity_level
         FROM incidents i
         LEFT JOIN severity s ON i.severity_id = s.id
         WHERE i.incident_id = ?";
@@ -34,6 +34,9 @@ $members_result = $conn->query($members_sql);
 $severity_sql = "SELECT id, level FROM severity ORDER BY id ASC";
 $severity_result = $conn->query($severity_sql);
 
+// Fetch barangays for dropdown
+$barangay_sql = "SELECT barangay_id, barangay_name FROM barangays ORDER BY barangay_name ASC";
+$barangay_result = $conn->query($barangay_sql);
 
 
 // Fetch ENUM values for cause
@@ -66,10 +69,20 @@ $causes = $matches[1]; // Extract ENUM values
             <input type="text" class="form-control" id="incident_type" name="incident_type" value="<?php echo htmlspecialchars($incident['incident_type']); ?>" required>
         </div>
         
-        <div class="mb-3">
-            <label for="location" class="form-label">Location</label>
-            <input type="text" class="form-control" id="location" name="location" value="<?php echo htmlspecialchars($incident['location']); ?>" required>
+         <!-- Replace Location with Barangay Dropdown -->
+         <div class="mb-3">
+            <label for="barangay_id" class="form-label">Barangay</label>
+            <select class="form-control" id="barangay_id" name="barangay_id" required>
+                <option value="">Select Barangay</option>
+                <?php while ($barangay = $barangay_result->fetch_assoc()): ?>
+                    <option value="<?php echo $barangay['barangay_id']; ?>" 
+                        <?php echo ($incident['barangay_id'] == $barangay['barangay_id']) ? 'selected' : ''; ?>>
+                        <?php echo htmlspecialchars($barangay['barangay_name']); ?>
+                    </option>
+                <?php endwhile; ?>
+            </select>
         </div>
+        
          <!-- Add Address Field -->
          <div class="mb-3">
             <label for="address" class="form-label">Address</label>

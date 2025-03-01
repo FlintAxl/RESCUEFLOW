@@ -8,7 +8,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     // Get form data
     $incident_id = intval($_POST['incident_id']);
     $incident_type = $_POST['incident_type'];
-    $location = $_POST['location'];
+    $barangay_id = intval($_POST['barangay_id']);
     $reported_by = $_POST['reported_by'] ?? null;
     $severity_id = intval($_POST['severity_id']);
     $cause = $_POST['cause'];  // Capture the cause field
@@ -24,21 +24,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $existing_attachments = $row ? $row['attachments'] : '';  
     $stmt->close();
 
-    // Update query including address and cause
-    $sql = "UPDATE incidents SET
-            incident_type = ?,
-            location = ?,
-            reported_by = ?,
-            severity_id = ?,
-            status_id = ?,
-            actions_taken = ?,
-            cause = ?,
-            address = ?
-            WHERE incident_id = ?";
+     // Update query with barangay_id instead of location
+     $sql = "UPDATE incidents SET
+     incident_type = ?,
+     barangay_id = ?, 
+     reported_by = ?,
+     severity_id = ?,
+     cause = ?,
+     address = ?
+     WHERE incident_id = ?";
 
     // Prepare statement
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("sssiisssi", $incident_type, $location, $reported_by, $severity_id, $status_id, $actions_taken, $cause, $address, $incident_id);
+    $stmt->bind_param("sisissi", $incident_type, $barangay_id, $reported_by, $severity_id, $cause, $address, $incident_id);
 
     // Execute the update
     if ($stmt->execute()) {

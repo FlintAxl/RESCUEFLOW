@@ -4,10 +4,11 @@ require '../includes/config.php';
 
 $data = [];
 
-// Fetch incident data grouped by date and location
-$sql = "SELECT DATE(reported_time) AS incident_date, location, COUNT(*) as count 
-        FROM incidents 
-        GROUP BY incident_date, location 
+// Fetch incident data grouped by date and barangay
+$sql = "SELECT DATE(reported_time) AS incident_date, b.barangay_name AS barangay, COUNT(*) as count 
+        FROM incidents i
+        JOIN barangays b ON i.barangay_id = b.barangay_id
+        GROUP BY incident_date, b.barangay_name
         ORDER BY incident_date ASC";
 $result = $conn->query($sql);
 

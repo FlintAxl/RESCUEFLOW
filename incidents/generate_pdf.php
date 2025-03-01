@@ -14,12 +14,15 @@ $pdf->SetAutoPageBreak(TRUE, 10);
 $pdf->AddPage();
 
 // Fetch incidents
-$sql = "SELECT i.incident_id, i.incident_type, i.location, 
-               i.reported_by, i.reported_time, 
-               s.level AS severity, i.cause
+$sql = "SELECT i.incident_id, i.incident_type, 
+               b.barangay_name, i.reported_by, 
+               i.reported_time, s.level AS severity, 
+               i.cause
         FROM incidents i
+        LEFT JOIN barangays b ON i.barangay_id = b.barangay_id
         LEFT JOIN severity s ON i.severity_id = s.id
         ORDER BY i.reported_time DESC";
+
 $result = $conn->query($sql);
 
 // Table Header
@@ -29,7 +32,7 @@ $html = '<h2>Incident Reports</h2>
                 <th><b>Incident ID</b></th>
                 <th><b>Incident Type</b></th>
                 <th><b>Severity</b></th>
-                <th><b>Location</b></th>
+                <th><b>Barangay</b></th>
                 <th><b>Reported By</b></th>
                 <th><b>Reported Time</b></th>
                 <th><b>Cause</b></th>
@@ -41,7 +44,7 @@ while ($row = $result->fetch_assoc()) {
                 <td>' . htmlspecialchars($row['incident_id']) . '</td>
                 <td>' . htmlspecialchars($row['incident_type']) . '</td>
                 <td>' . htmlspecialchars($row['severity'] ?? 'Not Specified') . '</td>
-                <td>' . htmlspecialchars($row['location']) . '</td>
+                <td>' . htmlspecialchars($row['barangay_name']) . '</td>
                 <td>' . htmlspecialchars($row['reported_by'] ?? 'Unknown') . '</td>
                 <td>' . htmlspecialchars($row['reported_time']) . '</td>
                 <td>' . htmlspecialchars($row['cause'] ?? 'Not specified') . '</td>
