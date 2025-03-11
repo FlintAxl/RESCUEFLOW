@@ -121,12 +121,34 @@
             padding: 20px;
             width: calc(100% - 250px);
             transition: margin-left 0.3s;
+
+
         }
+      /* Fix the toggle button position */
+#sidebar .toggle-btn {
+    position: absolute;
+    top: 15px;
+    right: -35px; /* Adjust to make it properly align outside */
+    background: #007BFF;
+    color: white;
+    border: none;
+    cursor: pointer;
+    width: 35px;
+    height: 35px;
+    text-align: center;
+    font-size: 20px;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
     </style>
 </head>
 <body>
 
     <nav id="sidebar">
+    <button class="toggle-btn" onclick="toggleSidebar()">&#9776;</button>
         <div class="logo-container">
             <img src="user/images/BFP STATION 1 LOGO.png" alt="BFP Logo" class="logo">
             <div class="title">BFP NCR - STATION 1</div>
@@ -145,15 +167,30 @@
         </div>
     </div>
 </div>
+<script>
+        function toggleSidebar() {
+            var sidebar = document.getElementById("sidebar");
+            var content = document.querySelector(".main-content");
+
+            if (sidebar.style.width === "60px") {
+                sidebar.style.width = "250px";
+                content.style.marginLeft = "250px";
+            } else {
+                sidebar.style.width = "60px";
+                content.style.marginLeft = "60px";
+            }
+        }
+    </script>
         <ul class="nav-links">
-            <li><a href="/RESCUEFLOW/personel/personel_index.php">PERSONNELS</a></li>
-            <li><a href="/RESCUEFLOW/incidents/reports.php">REPORTS</a></li>
-            <li><a href="/RESCUEFLOW/asset/item_index.php">ASSETS</a></li>
-            <li><a href="/RESCUEFLOW/attendance/attendance.php">📋 Attendance</a></li>
-            <li><a href="/RESCUEFLOW/shift/shift_index.php">SHIFTS</a></li>
-            <li><a href="/RESCUEFLOW/trainings/training_index.php">TRAINING SCHEDULE</a></li>
+        <li><a href="/RESCUEFLOW/personel/personel_index.php">👨‍🚒 Personnel</a></li>
+        <li><a href="/RESCUEFLOW/incidents/reports.php">📄 Reports</a></li>
+        <li><a href="/RESCUEFLOW/asset/item_index.php">📦 Assets</a></li>
+        <li><a href="/RESCUEFLOW/attendance/attendance.php">📋 Attendance</a></li>
+        <li><a href="/RESCUEFLOW/shift/shift_index.php">🕒 Shifts</a></li>
+        <li><a href="/RESCUEFLOW/trainings/training_index.php">🎓 Training</a></li>
+        <li><a href="/RESCUEFLOW/analysis/analysisindex.php">📊 Analysis</a></li>
             <li><a href="/RESCUEFLOW/dispatch/dispatchindex.php">DISPATCH</a></li>
-            <li><a href="/RESCUEFLOW/analysis/analysisindex.php">ANALYSIS</a></li>
+            
         </ul>
 
      

@@ -8,13 +8,15 @@ include('../includes/restrict_admin.php');
 $query = "SELECT s.shift_id, m.first_name, m.last_name, s.start_time, s.end_time, 
                  u.username AS assigned_by, 
                  CASE 
-                    WHEN NOW() BETWEEN s.start_time AND s.end_time THEN 'On Duty'
+                    WHEN a.time_out IS NULL AND a.timestamp IS NOT NULL THEN 'On Duty'
                     ELSE 'Off Duty'
                  END AS status
           FROM shifts s
           JOIN members m ON s.member_id = m.member_id
           LEFT JOIN users u ON s.assigned_by = u.user_id
+          LEFT JOIN attendance a ON s.member_id = a.member_id AND s.shift_id = a.shift_id
           ORDER BY s.start_time ASC";
+
 
 $result = mysqli_query($conn, $query);
 ?>
