@@ -102,6 +102,7 @@ $result = $conn->query($sql);
                     <th>Barangay</th>
                     <th>Address</th>
                     <th>Reported By</th>
+                    <th>Date</th>
                     <th>Time</th>
                     <th>Cause</th>
                     <th>Attachments</th>
@@ -117,7 +118,13 @@ $result = $conn->query($sql);
                         <td><?php echo htmlspecialchars($row['barangay']); ?></td>
                         <td><?php echo htmlspecialchars($row['address']); ?></td>
                         <td><?php echo htmlspecialchars($row['reporter_name']); ?></td>
-                        <td><?php echo htmlspecialchars($row['reported_time']); ?></td>
+                        <?php
+                        $reported_time = $row['reported_time'];
+                        $formatted_date = date('Y-m-d', strtotime($reported_time));
+                        $formatted_time = date('h:i A', strtotime($reported_time));
+                        ?>
+                        <td><?php echo htmlspecialchars($formatted_date); ?></td>
+                        <td><?php echo htmlspecialchars($formatted_time); ?></td>
                         <td><?php echo htmlspecialchars($row['cause'] ?? 'No cause recorded.'); ?></td>
                         <td>
                             <?php 
