@@ -4,21 +4,24 @@ include('../includes/check_admin.php');
 include('../includes/config.php');
 include('../includes/restrict_admin.php');
 
-// Fetch shifts with member details and calculate status
-$query = "SELECT s.shift_id, m.first_name, m.last_name, s.start_time, s.end_time, 
-                 u.username AS assigned_by, 
-                 CASE 
-                    WHEN a.time_out IS NULL AND a.timestamp IS NOT NULL THEN 'On Duty'
-                    ELSE 'Off Duty'
-                 END AS status
+// Fetch shifts and organize them by member and day
+$query = "SELECT s.shift_id, m.member_id, m.first_name, m.last_name, 
+                 s.start_time, s.end_time, s.shift_day
           FROM shifts s
           JOIN members m ON s.member_id = m.member_id
-          LEFT JOIN users u ON s.assigned_by = u.user_id
-          LEFT JOIN attendance a ON s.member_id = a.member_id AND s.shift_id = a.shift_id
-          ORDER BY s.start_time ASC";
-
+          ORDER BY m.last_name ASC, FIELD(s.shift_day, 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday')";
 
 $result = mysqli_query($conn, $query);
+
+$shifts = [];
+while ($row = mysqli_fetch_assoc($result)) {
+    // Convert time to 12-hour format
+    $start_time = date("h:i A", strtotime($row['start_time']));
+    $end_time = date("h:i A", strtotime($row['end_time']));
+    
+    $shifts[$row['member_id']]['name'] = $row['first_name'] . ' ' . $row['last_name'];
+    $shifts[$row['member_id']]['shifts'][$row['shift_day']] = $start_time . ' - ' . $end_time;
+}
 ?>
 
 <!DOCTYPE html>
@@ -28,51 +31,69 @@ $result = mysqli_query($conn, $query);
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Shift Management</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
 </head>
 <body class="bg-light">
 
-    <div class="container mt-5">
-        <h2 class="mb-4 text-center">Shift Management</h2>
-
-        <div class="d-flex justify-content-between mb-3">
-            <a href="add_shift.php" class="btn btn-primary">Add New Shift</a>
+<div class="container mt-5">
+    <div class="card shadow-lg">
+        <div class="card-header bg-primary text-white">
+            <h4 class="text-center">Shift Management</h4>
         </div>
+        <div class="card-body">
+            <div class="d-flex justify-content-between mb-3">
+                <a href="add_shift.php" class="btn btn-success">
+                    <i class="fas fa-plus"></i> Add New Shift
+                </a>
+            </div>
 
-        <div class="table-responsive">
-            <table class="table table-bordered table-striped">
-                <thead class="table-dark">
-                    <tr>
-                        <th>Member</th>
-                        <th>Start Time</th>
-                        <th>End Time</th>
-                        <th>Assigned By</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php while ($row = mysqli_fetch_assoc($result)) : ?>
+            <div class="table-responsive">
+                <table class="table table-bordered table-striped">
+                    <thead class="table-dark">
                         <tr>
-                            <td><?php echo $row['first_name'] . ' ' . $row['last_name']; ?></td>
-                            <td><?php echo $row['start_time']; ?></td>
-                            <td><?php echo $row['end_time']; ?></td>
-                            <td><?php echo $row['assigned_by'] ?? 'N/A'; ?></td>
-                            <td>
-                                <span class="badge <?php echo $row['status'] === 'On Duty' ? 'bg-success' : 'bg-secondary'; ?>">
-                                    <?php echo $row['status']; ?>
-                                </span>
-                            </td>
-                            <td>
-                                <a href="edit_shift.php?id=<?php echo $row['shift_id']; ?>" class="btn btn-warning btn-sm">Edit</a>
-                                <a href="delete_shift.php?id=<?php echo $row['shift_id']; ?>" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure?');">Delete</a>
-                            </td>
+                            <th>Member</th>
+                            <th>Monday</th>
+                            <th>Tuesday</th>
+                            <th>Wednesday</th>
+                            <th>Thursday</th>
+                            <th>Friday</th>
+                            <th>Saturday</th>
+                            <th>Sunday</th>
+                            <th>Actions</th>
                         </tr>
-                    <?php endwhile; ?>
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($shifts as $member_id => $memberData): ?>
+                            <tr>
+                                <td><?= htmlspecialchars($memberData['name']); ?></td>
+                                <?php 
+                                    $days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+                                    foreach ($days as $day) {
+                                        echo "<td>" . (isset($memberData['shifts'][$day]) ? $memberData['shifts'][$day] : '-') . "</td>";
+                                    }
+                                ?>
+                                <td>
+                                    <a href="edit_shift.php?member_id=<?= $member_id ?>" class="btn btn-warning btn-sm">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </a>
+                                    <a href="delete_shift.php?member_id=<?= $member_id ?>" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure?');">
+                                        <i class="fas fa-trash"></i> Delete
+                                    </a>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                        <?php if (empty($shifts)): ?>
+                            <tr>
+                                <td colspan="9" class="text-center text-muted">No shifts assigned yet.</td>
+                            </tr>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
+</div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
