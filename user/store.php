@@ -53,13 +53,15 @@ if ($stmt) {
 
 // Encrypt the password
 $password = sha1($password);
+// Fetch member_id (optional)
+$member_id = isset($_POST['member_id']) && !empty($_POST['member_id']) ? $_POST['member_id'] : NULL;
 
 // Insert the new user into the database
-$sql = "INSERT INTO users (username,email, password_hash, role_id) VALUES (?, ?, ?, ?)";
+$sql = "INSERT INTO users (username, email, password_hash, role_id, member_id) VALUES (?, ?, ?, ?, ?)";
 $stmt = mysqli_prepare($conn, $sql);
 
 if ($stmt) {
-    mysqli_stmt_bind_param($stmt, "sssi",$uname, $email, $password, $role_id);
+    mysqli_stmt_bind_param($stmt, "sssii", $uname, $email, $password, $role_id, $member_id);
     $execute = mysqli_stmt_execute($stmt);
 
     if ($execute) {
@@ -77,4 +79,5 @@ if ($stmt) {
     header("Location: register.php");
     exit();
 }
+
 ?>

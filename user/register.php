@@ -78,6 +78,24 @@ if (isset($_SESSION['message'])) {
     </select>
     <i class='bx bxs-key'></i>
 </div>
+<!-- Member selection -->
+<div class="input-box">
+    <select class="form-control" id="member_id" name="member_id">
+        <option value="">Select Member (Optional)</option>
+        <?php
+        if ($conn) {
+            $sql = "SELECT member_id, CONCAT(first_name, ' ', last_name) AS member_name FROM members";
+            $result = mysqli_query($conn, $sql);
+            if ($result) {
+                while ($row = mysqli_fetch_assoc($result)) {
+                    echo "<option value=\"{$row['member_id']}\">{$row['member_name']}</option>";
+                }
+            }
+        }
+        ?>
+    </select>
+    <i class='bx bxs-user'></i>
+</div>
 
 
         <!-- Submit button -->

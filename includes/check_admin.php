@@ -9,4 +9,10 @@ if (isset($_SESSION['role']) && $_SESSION['role'] == 4) {
 } else {
     include('header.php');
 }
+//para sa shift index eme 
+if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
+    $is_admin = false;
+} else {
+    $is_admin = true;
+}
 ?>
