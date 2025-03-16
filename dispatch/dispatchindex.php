@@ -150,16 +150,18 @@ if (isset($_POST['submit_emergency_info'])) {
 <div class="container mt-5">
     <h1 class="text-center mb-4">Firefighter Dispatch System</h1>
 
-    <!-- Dispatch Location Form -->
-    <div class="card p-4 mb-4">
-        <h2>Dispatch Location</h2>
-        <form method="POST">
-            <div class="mb-3">
-                <input type="text" class="form-control" name="location" placeholder="Enter Dispatch Location" required>
-            </div>
-            <button type="submit" name="submit_location" class="btn btn-success w-100">Dispatch</button>
-        </form>
-    </div>
+   <!-- Dispatch Location Form -->
+<div class="card p-4 mb-4">
+    <h2>Dispatch Location</h2>
+    <form method="POST">
+        <div class="mb-3">
+            <input type="text" class="form-control" name="location" placeholder="Enter Dispatch Location"
+                   value="<?php echo isset($_GET['location']) ? htmlspecialchars($_GET['location']) : ''; ?>" required>
+        </div>
+        <button type="submit" name="submit_location" class="btn btn-success w-100">Dispatch</button>
+    </form>
+</div>
+
 
     <!-- Update Dispatch Status Form -->
     <div class="card p-4 mb-4">
@@ -218,9 +220,9 @@ if (isset($_POST['submit_emergency_info'])) {
 
     <!-- Button to trigger emergency history view -->
     <div class="card p-4 mb-4">
-        <h2>View Emergency History</h2>
+        <h2>View  History</h2>
         <button class="btn btn-info w-100" data-bs-toggle="collapse" data-bs-target="#emergencyHistory" aria-expanded="false" aria-controls="emergencyHistory">
-            View Emergency History
+            View History
         </button>
 
         <!-- Emergency History (Carousel) -->
@@ -235,6 +237,7 @@ if (isset($_POST['submit_emergency_info'])) {
                                 <p><strong>Where:</strong> <?php echo htmlspecialchars($record['where']); ?></p>
                                 <p><strong>Why:</strong> <?php echo htmlspecialchars($record['why']); ?></p>
                                 <p><strong>Caller Phone:</strong> <?php echo htmlspecialchars($record['caller_phone']); ?></p>
+                                
                             </div>
                         </div>
                     <?php endforeach; ?>

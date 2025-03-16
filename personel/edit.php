@@ -2,9 +2,9 @@
 ob_start(); // Start output buffering
 session_start();
 include('../includes/check_admin.php');
-
 include('../includes/config.php');
 include('../includes/restrict_admin.php');
+
 // Get the member details
 $member_id = $_GET['member_id'] ?? null;
 if (!$member_id) {
@@ -80,64 +80,71 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit Personnel</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
 </head>
 <body>
-    <h2>Edit Personnel</h2>
-    
-    <form method="POST" action="" enctype="multipart/form-data">
-        <input type="hidden" name="member_id" value="<?= htmlspecialchars($member_id) ?>">
+    <div class="container mt-5">
+        <div class="card shadow-lg">
+            <div class="card-header bg-primary text-white">
+                <h3 class="mb-0">Edit Personnel</h3>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="" enctype="multipart/form-data">
+                    <input type="hidden" name="member_id" value="<?= htmlspecialchars($member_id) ?>">
 
-        <div class="mb-3">
-            <label for="first_name" class="form-label">First Name</label>
-            <input type="text" name="first_name" class="form-control" value="<?= htmlspecialchars($first_name) ?>" required>
+                    <div class="mb-3">
+                        <label for="first_name" class="form-label">First Name</label>
+                        <input type="text" name="first_name" class="form-control" value="<?= htmlspecialchars($first_name) ?>" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="last_name" class="form-label">Last Name</label>
+                        <input type="text" name="last_name" class="form-control" value="<?= htmlspecialchars($last_name) ?>" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" name="email" class="form-control" value="<?= htmlspecialchars($email) ?>" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="role_id" class="form-label">Role</label>
+                        <select name="role_id" class="form-select" required>
+                            <option value="">Select Role</option>
+                            <?php
+                            $roles_query = "SELECT * FROM roles";
+                            $roles_result = mysqli_query($conn, $roles_query);
+                            while ($role = mysqli_fetch_assoc($roles_result)) {
+                                $selected = ($role['role_id'] == $role_id) ? "selected" : "";
+                                echo "<option value='{$role['role_id']}' $selected>{$role['role_name']}</option>";
+                            }
+                            ?>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="rank_id" class="form-label">Rank</label>
+                        <select name="rank_id" class="form-select" required>
+                            <option value="">Select Rank</option>
+                            <?php
+                            $ranks_query = "SELECT * FROM ranks";
+                            $ranks_result = mysqli_query($conn, $ranks_query);
+                            while ($rank = mysqli_fetch_assoc($ranks_result)) {
+                                $selected = ($rank['rank_id'] == $rank_id) ? "selected" : "";
+                                echo "<option value='{$rank['rank_id']}' $selected>{$rank['rank_name']}</option>";
+                            }
+                            ?>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="image" class="form-label">Update Image</label>
+                        <input type="file" name="image" class="form-control" accept="image/*">
+                        <label class="mt-2">Current Profile Picture:</label><br>
+                        <img src="../personel/images/<?= htmlspecialchars($old_image) ?>" width="100" height="100" class="rounded-circle border">
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <button type="submit" class="btn btn-primary">Update</button>
+                        <a href="index.php" class="btn btn-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
         </div>
-        <div class="mb-3">
-            <label for="last_name" class="form-label">Last Name</label>
-            <input type="text" name="last_name" class="form-control" value="<?= htmlspecialchars($last_name) ?>" required>
-        </div>
-        <div class="mb-3">
-            <label for="email" class="form-label">Email</label>
-            <input type="email" name="email" class="form-control" value="<?= htmlspecialchars($email) ?>" required>
-        </div>
-        <div class="mb-3">
-            <label for="role_id" class="form-label">Role</label>
-            <select name="role_id" class="form-select" required>
-                <option value="">Select Role</option>
-                <?php
-                $roles_query = "SELECT * FROM roles";
-                $roles_result = mysqli_query($conn, $roles_query);
-                while ($role = mysqli_fetch_assoc($roles_result)) {
-                    $selected = ($role['role_id'] == $role_id) ? "selected" : "";
-                    echo "<option value='{$role['role_id']}' $selected>{$role['role_name']}</option>";
-                }
-                ?>
-            </select>
-        </div>
-        <div class="mb-3">
-            <label for="rank_id" class="form-label">Rank</label>
-            <select name="rank_id" class="form-select" required>
-                <option value="">Select Rank</option>
-                <?php
-                $ranks_query = "SELECT * FROM ranks";
-                $ranks_result = mysqli_query($conn, $ranks_query);
-                while ($rank = mysqli_fetch_assoc($ranks_result)) {
-                    $selected = ($rank['rank_id'] == $rank_id) ? "selected" : "";
-                    echo "<option value='{$rank['rank_id']}' $selected>{$rank['rank_name']}</option>";
-                }
-                ?>
-            </select>
-        </div>
-
-        <div class="mb-3">
-            <label for="image" class="form-label">Update Image</label>
-            <input type="file" name="image" class="form-control" accept="image/*">
-            <label>Current Profile Picture:</label><br>
-            <img src="../personel/images/<?= htmlspecialchars($old_image) ?>" width="100" height="100" class="rounded-circle">
-        </div>
-
-        <button type="submit" class="btn btn-primary">Update</button>
-        <a href="index.php" class="btn btn-secondary">Cancel</a>
-    </form>
+    </div>
 </body>
 </html>
-
